@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>UBW NEWS — World News, Off-Topic Dispatches & Opinion</title>
+<meta name="description" content="UBW NEWS is a reader-filed wire for world news, off-topic dispatches and signed opinion. Read free, post your own stories, and like, comment, share or repost anything on the wire.">
+<meta name="keywords" content="UBW NEWS, world news, latest news, opinion, off-topic, community news, reader news">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="https://YOUR-DOMAIN-HERE/">
+
+<meta property="og:type" content="website">
+<meta property="og:title" content="UBW NEWS — World News, Off-Topic Dispatches & Opinion">
+<meta property="og:description" content="A reader-filed wire for world news, off-topic dispatches and signed opinion. No ads. Post, like, comment, share and repost freely.">
+<meta property="og:url" content="https://YOUR-DOMAIN-HERE/">
+
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="UBW NEWS">
+<meta name="twitter:description" content="A reader-filed wire for world news, off-topic dispatches and signed opinion.">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,500;8..60,700;8..60,900&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<style>
+  :root{
+    --paper:#E8E4DA;
+    --paper-raised:#F1EEE5;
+    --ink:#17181A;
+    --ink-soft:#54524B;
+    --wire-blue:#2450E0;
+    --alert-red:#C62A2A;
+    --off-topic:#6B6456;
+    --rule:#B8B2A2;
+    --rule-soft:#D4CFC2;
+    --paper-shadow: 0 1px 0 rgba(23,24,26,0.08);
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--paper);color:var(--ink);font-family:'Inter',sans-serif;-webkit-font-smoothing:antialiased;}
+  .mono{font-family:'IBM Plex Mono',monospace;}
+  .serif{font-family:'Source Serif 4',serif;}
+
+  .ticker-wrap{background:var(--ink);color:var(--paper);overflow:hidden;white-space:nowrap;border-bottom:2px solid var(--wire-blue);}
+  .ticker-inner{display:inline-block;padding-left:100%;animation:ticker-scroll 32s linear infinite;}
+  .ticker-wrap:hover .ticker-inner{animation-play-state:paused;}
+  @keyframes ticker-scroll{0%{transform:translateX(0);}100%{transform:translateX(-100%);}}
+  .ticker-item{display:inline-block;padding:8px 28px;font-size:12px;letter-spacing:.04em;}
+  .ticker-item b{color:var(--wire-blue);margin-right:8px;}
+  @media (prefers-reduced-motion: reduce){.ticker-inner{animation:none;padding-left:16px;}}
+
+  .masthead{max-width:760px;margin:0 auto;padding:34px 20px 18px;text-align:center;border-bottom:3px double var(--ink);}
+  .wordmark{font-family:'Source Serif 4',serif;font-weight:900;font-size:52px;letter-spacing:-0.01em;margin:0;line-height:1;}
+  .wordmark span{color:var(--wire-blue);}
+  .tagline{margin-top:8px;font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-soft);}
+  .dateline{margin-top:4px;font-size:11px;color:var(--ink-soft);letter-spacing:.05em;}
+
+  .container{max-width:760px;margin:0 auto;padding:0 20px 80px;}
+
+  .idbar{display:flex;justify-content:space-between;align-items:center;padding:14px 0;border-bottom:1px solid var(--rule);font-size:13px;}
+  .idbar .who{color:var(--ink-soft);}
+  .idbar .who b{color:var(--ink);}
+  .link-btn{background:none;border:none;color:var(--wire-blue);cursor:pointer;font-family:'IBM Plex Mono',monospace;font-size:12px;text-decoration:underline;padding:0;}
+
+  .filters{display:flex;gap:6px;padding:16px 0;flex-wrap:wrap;}
+  .filter-tab{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.06em;text-transform:uppercase;padding:7px 13px;border:1px solid var(--ink);background:transparent;color:var(--ink);cursor:pointer;border-radius:2px;transition:.15s;}
+  .filter-tab:hover{background:var(--paper-raised);}
+  .filter-tab.active{background:var(--ink);color:var(--paper);}
+
+  .composer{background:var(--paper-raised);border:1px solid var(--rule);border-radius:3px;margin:18px 0;box-shadow:var(--paper-shadow);}
+  .composer-head{display:flex;justify-content:space-between;align-items:center;padding:14px 18px;cursor:pointer;}
+  .composer-head h3{margin:0;font-family:'Source Serif 4',serif;font-size:17px;font-weight:700;}
+  .composer-toggle{font-family:'IBM Plex Mono',monospace;font-size:18px;color:var(--wire-blue);}
+  .composer-body{padding:0 18px 18px;display:none;}
+  .composer-body.open{display:block;}
+  .cat-select{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;}
+  .cat-pill{font-family:'IBM Plex Mono',monospace;font-size:11px;text-transform:uppercase;letter-spacing:.05em;padding:6px 12px;border:1px solid var(--rule);border-radius:20px;cursor:pointer;background:var(--paper);color:var(--ink-soft);}
+  .cat-pill.sel[data-cat="world"]{background:var(--wire-blue);border-color:var(--wire-blue);color:#fff;}
+  .cat-pill.sel[data-cat="opinion"]{background:var(--alert-red);border-color:var(--alert-red);color:#fff;}
+  .cat-pill.sel[data-cat="offtopic"]{background:var(--off-topic);border-color:var(--off-topic);color:#fff;}
+  .field{width:100%;font-family:'Inter',sans-serif;font-size:14px;padding:10px 12px;border:1px solid var(--rule);border-radius:3px;background:#fff;margin-bottom:10px;color:var(--ink);}
+  .field.headline{font-family:'Source Serif 4',serif;font-size:19px;font-weight:700;}
+  textarea.field{min-height:100px;resize:vertical;line-height:1.5;}
+  .post-btn{font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:.06em;text-transform:uppercase;background:var(--ink);color:var(--paper);border:none;padding:10px 20px;border-radius:3px;cursor:pointer;}
+  .post-btn:hover{background:var(--wire-blue);}
+  .post-btn:disabled{opacity:.4;cursor:not-allowed;}
+  .hint{font-size:11px;color:var(--ink-soft);margin-top:6px;}
+
+  .repost-tag{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--ink-soft);padding:10px 4px 0;letter-spacing:.03em;}
+  .card{background:var(--paper-raised);border:1px solid var(--rule-soft);border-left:4px solid var(--ink-soft);border-radius:2px;margin-bottom:16px;box-shadow:var(--paper-shadow);}
+  .card[data-cat="world"]{border-left-color:var(--wire-blue);}
+  .card[data-cat="opinion"]{border-left-color:var(--alert-red);}
+  .card[data-cat="offtopic"]{border-left-color:var(--off-topic);}
+  .card-inner{padding:16px 18px;}
+  .byline{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--ink-soft);letter-spacing:.03em;display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:8px;}
+  .cat-tag{padding:2px 7px;border-radius:2px;font-weight:600;color:#fff;font-size:10px;letter-spacing:.05em;}
+  .cat-tag[data-cat="world"]{background:var(--wire-blue);}
+  .cat-tag[data-cat="opinion"]{background:var(--alert-red);}
+  .cat-tag[data-cat="offtopic"]{background:var(--off-topic);}
+  .headline{font-family:'Source Serif 4',serif;font-weight:700;font-size:20px;margin:0 0 8px;line-height:1.25;}
+  .body-text{font-size:14.5px;line-height:1.6;color:#2b2a27;white-space:pre-wrap;margin-bottom:10px;}
+  .post-img{width:100%;border-radius:2px;margin-bottom:10px;display:block;border:1px solid var(--rule-soft);}
+  .actions{display:flex;gap:4px;border-top:1px solid var(--rule-soft);padding-top:10px;margin-top:4px;flex-wrap:wrap;}
+  .act-btn{font-family:'IBM Plex Mono',monospace;font-size:12px;background:none;border:none;color:var(--ink-soft);cursor:pointer;padding:6px 10px;border-radius:3px;display:flex;align-items:center;gap:5px;}
+  .act-btn:hover{background:var(--paper);color:var(--ink);}
+  .act-btn.on{color:var(--alert-red);font-weight:600;}
+  .act-btn.on.repost-on{color:var(--wire-blue);}
+
+  .comments{display:none;border-top:1px dashed var(--rule);margin-top:10px;padding-top:10px;}
+  .comments.open{display:block;}
+  .comment{padding:8px 0 8px 14px;border-left:2px solid var(--rule-soft);margin-bottom:6px;}
+  .comment .cmeta{font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:var(--ink-soft);margin-bottom:2px;}
+  .comment .ctext{font-size:13.5px;line-height:1.5;}
+  .comment-form{display:flex;gap:6px;margin-top:8px;}
+  .comment-input{flex:1;font-size:13px;padding:8px 10px;border:1px solid var(--rule);border-radius:3px;}
+  .reply-btn{font-family:'IBM Plex Mono',monospace;font-size:11px;background:var(--ink);color:var(--paper);border:none;padding:0 14px;border-radius:3px;cursor:pointer;}
+  .no-comments{font-size:12.5px;color:var(--ink-soft);font-style:italic;}
+
+  .empty-desk{text-align:center;padding:60px 20px;color:var(--ink-soft);}
+  .empty-desk .serif{font-size:22px;color:var(--ink);margin-bottom:6px;}
+  .loading-line{text-align:center;padding:40px;font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--ink-soft);letter-spacing:.1em;}
+
+  .modal-bg{position:fixed;inset:0;background:rgba(23,24,26,.55);display:flex;align-items:center;justify-content:center;z-index:50;padding:20px;}
+  .modal{background:var(--paper);border:1px solid var(--ink);max-width:360px;width:100%;padding:26px;border-radius:3px;}
+  .modal h2{font-family:'Source Serif 4',serif;margin:0 0 6px;font-size:22px;}
+  .modal p{font-size:13px;color:var(--ink-soft);margin:0 0 16px;line-height:1.5;}
+
+  footer{max-width:760px;margin:30px auto 0;padding:20px;text-align:center;font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:var(--ink-soft);border-top:1px solid var(--rule);}
+
+  .setup-screen{max-width:640px;margin:60px auto;padding:32px;font-family:'Inter',sans-serif;background:var(--paper-raised);border:1px solid var(--rule);border-radius:4px;}
+  .setup-screen h2{font-family:'Source Serif 4',serif;}
+  .setup-screen code{background:#fff;padding:2px 6px;border-radius:3px;border:1px solid var(--rule-soft);font-family:'IBM Plex Mono',monospace;}
+
+  ::selection{background:var(--wire-blue);color:#fff;}
+</style>
+</head>
+<body>
+
+<div id="setup-gate"></div>
+
+<div id="site-root" style="display:none;">
+
+<div class="ticker-wrap"><div class="ticker-inner mono" id="ticker"></div></div>
+
+<div class="masthead">
+  <h1 class="wordmark">UBW <span>NEWS</span></h1>
+  <div class="tagline">World Desk · Off-Topic Dispatches · Signed Opinion</div>
+  <div class="dateline mono" id="dateline"></div>
+</div>
+
+<div class="container">
+  <div class="idbar">
+    <div class="who" id="idbar-text">Loading byline…</div>
+    <button class="link-btn" id="change-name-btn" style="display:none;">change byline</button>
+  </div>
+
+  <div class="composer" id="composer">
+    <div class="composer-head" id="composer-head">
+      <h3>File a story</h3>
+      <span class="composer-toggle" id="composer-toggle">＋</span>
+    </div>
+    <div class="composer-body" id="composer-body">
+      <div class="cat-select" id="cat-select">
+        <button class="cat-pill sel" data-cat="world">World Desk</button>
+        <button class="cat-pill" data-cat="offtopic">Off-Topic</button>
+        <button class="cat-pill" data-cat="opinion">My Opinion</button>
+      </div>
+      <input class="field headline" id="in-title" placeholder="Headline" maxlength="140">
+      <textarea class="field" id="in-body" placeholder="What's the story? (your take is welcome — say it's an opinion if it is one)" maxlength="3000"></textarea>
+      <input class="field" id="in-img" placeholder="Image URL (optional)">
+      <button class="post-btn" id="submit-post">Post to Wire</button>
+      <div class="hint">Every reader can see this story, like it, comment on it, share it and repost it — live.</div>
+    </div>
+  </div>
+
+  <div class="filters" id="filters">
+    <button class="filter-tab active" data-filter="all">All</button>
+    <button class="filter-tab" data-filter="world">World</button>
+    <button class="filter-tab" data-filter="offtopic">Off-Topic</button>
+    <button class="filter-tab" data-filter="opinion">Opinion</button>
+  </div>
+
+  <div id="feed"><div class="loading-line">CONNECTING TO THE WIRE…</div></div>
+</div>
+
+<footer>UBW NEWS — reader-filed wire. No ads, no sponsored placements. · Comments and stories are visible to every reader, live.</footer>
+
+<div class="modal-bg" id="modal-bg" style="display:none;">
+  <div class="modal">
+    <h2>Create your byline</h2>
+    <p>Pick the name you'll be known by on UBW NEWS. It's shown next to everything you post, like, comment or repost — and it's saved on this browser so you won't be asked again.</p>
+    <input class="field" id="modal-name" placeholder="e.g. Aditya R." maxlength="30">
+    <button class="post-btn" id="modal-save" style="width:100%;">Confirm and continue</button>
+  </div>
+</div>
+
+</div>
+
+<script>
+// =====================================================================
+// PASTE YOUR FIREBASE CONFIG HERE — see SETUP-GUIDE.md for how to get it
+// =====================================================================
+const firebaseConfig = {
+  apiKey: "AIzaSyDejQn6flJ1OaOZfvs8oLNYD5Ts_iC7NnQ",
+  authDomain: "ubw-news.firebaseapp.com",
+  projectId: "ubw-news",
+  storageBucket: "ubw-news.firebasestorage.app",
+  messagingSenderId: "818635944040",
+  appId: "1:818635944040:web:c6387b442b94dff4b74bdd"
+};
+// =====================================================================
+
+(function(){
+  const CATS = {
+    world:{label:'World Desk', short:'WORLD'},
+    offtopic:{label:'Off-Topic', short:'OFF-TOPIC'},
+    opinion:{label:'My Opinion', short:'OPINION'}
+  };
+
+  if(firebaseConfig.apiKey === 'YOUR_API_KEY'){
+    document.getElementById('setup-gate').innerHTML =
+      '<div class="setup-screen">' +
+        '<h2>Setup needed</h2>' +
+        '<p>This file needs your own Firebase project connected before it can go live. Open <code>ubw-news-selfhost.html</code> in a text editor, find the block that says ' +
+        '<code>PASTE YOUR FIREBASE CONFIG HERE</code> near the top of the &lt;script&gt; tag, and paste in your project&#39;s config values.</p>' +
+        '<p>Full step-by-step instructions are in <code>SETUP-GUIDE.md</code>, which came with this file.</p>' +
+      '</div>';
+    return;
+  }
+
+  document.getElementById('site-root').style.display = 'block';
+
+  let app, db;
+  try{
+    app = firebase.initializeApp(firebaseConfig);
+    db = firebase.firestore();
+  }catch(e){
+    document.getElementById('feed').innerHTML = '<div class="empty-desk">Could not connect — double check the Firebase config values in the file.</div>';
+    return;
+  }
+
+  // Every visitor is silently signed in anonymously — no login screen shown to
+  // them — so Firestore rules can require a real authenticated write and
+  // reject raw, script-made requests that bypass the site entirely.
+  let currentUid = null;
+  firebase.auth().onAuthStateChanged((user) => {
+    currentUid = user ? user.uid : null;
+  });
+  firebase.auth().signInAnonymously().catch((err) => {
+    console.error('anonymous sign-in failed', err);
+  });
+
+  let username = null;
+  let posts = [];
+  let commentsCache = {};
+  let commentListeners = {};
+  let openCommentIds = new Set();
+  let activeFilter = 'all';
+  let selectedCat = 'world';
+
+  const $ = (id) => document.getElementById(id);
+
+  function escapeHtml(str){
+    return String(str).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+
+  function timeAgo(ts){
+    const diff = Math.floor((Date.now()-ts)/1000);
+    if(diff<60) return 'just now';
+    if(diff<3600) return Math.floor(diff/60)+'m ago';
+    if(diff<86400) return Math.floor(diff/3600)+'h ago';
+    return Math.floor(diff/86400)+'d ago';
+  }
+
+  function setDateline(){
+    $('dateline').textContent = new Date().toLocaleDateString('en-IN',{weekday:'long', year:'numeric', month:'long', day:'numeric'}).toUpperCase();
+  }
+
+  function loadUsername(){
+    try{ return localStorage.getItem('ubw_username'); }catch(e){ return null; }
+  }
+  function saveUsername(name){
+    try{ localStorage.setItem('ubw_username', name); }catch(e){ /* storage unavailable — name just won't persist */ }
+  }
+
+  // ---------- rendering ----------
+  function renderIdBar(){
+    if(username){
+      $('idbar-text').innerHTML = 'Reading as <b>'+escapeHtml(username)+'</b>';
+      $('change-name-btn').style.display = 'inline';
+    } else {
+      $('idbar-text').textContent = 'Reading anonymously';
+      $('change-name-btn').style.display = 'none';
+    }
+  }
+
+  function renderTicker(){
+    const el = $('ticker');
+    const withTitles = posts.filter(p => p.title);
+    if(withTitles.length===0){ el.innerHTML = '<span class="ticker-item"><b>WIRE</b> No stories filed yet — be the first.</span>'; return; }
+    const latest = withTitles.slice(0,12);
+    let html = latest.map(p => '<span class="ticker-item"><b>'+CATS[p.category].short+'</b>'+escapeHtml(p.title)+'</span>').join('');
+    el.innerHTML = html + html;
+  }
+
+  function renderFilters(){
+    document.querySelectorAll('.filter-tab').forEach(btn=>{
+      btn.classList.toggle('active', btn.dataset.filter===activeFilter);
+    });
+  }
+
+  function renderFeed(){
+    const feedEl = $('feed');
+    const list = posts.filter(p => activeFilter==='all' ? true : p.category===activeFilter);
+    if(list.length===0){
+      feedEl.innerHTML = '<div class="empty-desk"><div class="serif">The desk is empty.</div>File the first story above — the wire starts with you.</div>';
+      return;
+    }
+    feedEl.innerHTML = list.map(p => renderCard(p)).join('');
+  }
+
+  function renderCard(p){
+    const isOpen = openCommentIds.has(p.id);
+    const cmts = commentsCache[p.id] || [];
+    const commentsHtml = cmts.length
+      ? cmts.map(c => '<div class="comment"><div class="cmeta">'+escapeHtml(c.author)+' · '+timeAgo(c.ts)+'</div><div class="ctext">'+escapeHtml(c.text)+'</div></div>').join('')
+      : '<div class="no-comments">No comments yet — add your take.</div>';
+
+    let repostTag = '';
+    let bodyContent = p;
+    if(p.repostOf){
+      const orig = posts.find(x=>x.id===p.repostOf);
+      repostTag = '<div class="repost-tag">🔁 Reposted by '+escapeHtml(p.author)+'</div>';
+      if(orig) bodyContent = orig;
+    }
+    const img = bodyContent.imageUrl ? ('<img class="post-img" data-fallback="1" src="'+escapeHtml(bodyContent.imageUrl)+'" alt="">') : '';
+    const liked = username && (p.likes||[]).includes(username);
+    const reposted = username && (p.reposts||[]).includes(username);
+
+    return (
+      repostTag +
+      '<div class="card" data-cat="'+bodyContent.category+'" data-id="'+p.id+'">' +
+        '<div class="card-inner">' +
+          '<div class="byline"><span class="cat-tag" data-cat="'+bodyContent.category+'">'+CATS[bodyContent.category].short+'</span><span>'+escapeHtml(bodyContent.author)+'</span><span>·</span><span>'+timeAgo(bodyContent.ts)+'</span></div>' +
+          '<h2 class="headline">'+escapeHtml(bodyContent.title)+'</h2>' +
+          img +
+          '<div class="body-text">'+escapeHtml(bodyContent.body)+'</div>' +
+          '<div class="actions">' +
+            '<button class="act-btn '+(liked?'on':'')+'" data-action="like" data-id="'+p.id+'">'+(liked?'❤':'🤍')+' '+(p.likes||[]).length+'</button>' +
+            '<button class="act-btn" data-action="toggle-comments" data-id="'+p.id+'">💬 '+(p.commentCount||0)+'</button>' +
+            '<button class="act-btn '+(reposted?'on repost-on':'')+'" data-action="repost" data-id="'+p.id+'">🔁 '+(p.reposts||[]).length+'</button>' +
+            '<button class="act-btn" data-action="share" data-id="'+p.id+'">↗ Share</button>' +
+          '</div>' +
+          '<div class="comments '+(isOpen?'open':'')+'" id="cm-'+p.id+'">' +
+            '<div id="cm-list-'+p.id+'">'+commentsHtml+'</div>' +
+            '<div class="comment-form"><input class="comment-input" id="cm-in-'+p.id+'" placeholder="Add your take…" maxlength="500"><button class="reply-btn" data-action="comment" data-id="'+p.id+'">Reply</button></div>' +
+          '</div>' +
+        '</div>' +
+      '</div>'
+    );
+  }
+
+  function renderAll(){
+    renderIdBar();
+    renderTicker();
+    renderFilters();
+    renderFeed();
+  }
+
+  // ---------- Firestore live sync ----------
+  function initPostsListener(){
+    db.collection('posts').orderBy('ts','desc').onSnapshot(
+      (snapshot) => {
+        posts = snapshot.docs.map(doc => Object.assign({id: doc.id}, doc.data()));
+        renderAll();
+      },
+      (err) => {
+        console.error('posts listener error', err);
+        $('feed').innerHTML = '<div class="empty-desk">Could not load the wire. Check your internet connection and Firestore security rules.</div>';
+      }
+    );
+  }
+
+  function openComments(postId){
+    openCommentIds.add(postId);
+    if(!commentListeners[postId]){
+      commentListeners[postId] = db.collection('posts').doc(postId).collection('comments').orderBy('ts','asc')
+        .onSnapshot((snap) => {
+          commentsCache[postId] = snap.docs.map(d => d.data());
+          renderAll();
+        }, (err) => console.error('comments listener error', err));
+    }
+    renderAll();
+  }
+  function closeComments(postId){
+    openCommentIds.delete(postId);
+    if(commentListeners[postId]){ commentListeners[postId](); delete commentListeners[postId]; }
+    renderAll();
+  }
+
+  // ---------- actions ----------
+  function requireUser(){
+    if(!username){
+      $('modal-name').value = '';
+      $('modal-bg').style.display='flex';
+      $('modal-name').focus();
+      return false;
+    }
+    return true;
+  }
+
+  async function handleLike(id){
+    if(!requireUser()) return;
+    if(!currentUid){ alert('Still connecting — try again in a second.'); return; }
+    const p = posts.find(x=>x.id===id); if(!p) return;
+    const liked = (p.likes||[]).includes(username);
+    try{
+      await db.collection('posts').doc(id).update({
+        likes: liked ? firebase.firestore.FieldValue.arrayRemove(username) : firebase.firestore.FieldValue.arrayUnion(username)
+      });
+    }catch(e){ console.error('like failed', e); }
+  }
+
+  async function handleRepost(id){
+    if(!requireUser()) return;
+    if(!currentUid){ alert('Still connecting — try again in a second.'); return; }
+    const p = posts.find(x=>x.id===id); if(!p) return;
+    if((p.reposts||[]).includes(username)) return;
+    try{
+      await db.collection('posts').doc(id).update({ reposts: firebase.firestore.FieldValue.arrayUnion(username) });
+      await db.collection('posts').add({
+        author: username, ts: Date.now(), category: p.category,
+        title:'', body:'', imageUrl:'', likes:[], reposts:[], repostOf: id, commentCount: 0, uid: currentUid
+      });
+    }catch(e){ console.error('repost failed', e); }
+  }
+
+  async function handleShare(id){
+    const p = posts.find(x=>x.id===id); if(!p) return;
+    const orig = p.repostOf ? (posts.find(x=>x.id===p.repostOf) || p) : p;
+    const text = 'UBW NEWS — '+(orig.title || 'a story')+'\\n\\nShared from UBW NEWS';
+    try{
+      if(navigator.share){ await navigator.share({title:'UBW NEWS', text}); }
+      else { await navigator.clipboard.writeText(text); alert('Story text copied — paste it anywhere to share.'); }
+    }catch(e){ /* user cancelled share — no action needed */ }
+  }
+
+  function handleToggleComments(id){
+    if(openCommentIds.has(id)) closeComments(id); else openComments(id);
+  }
+
+  async function handleComment(id){
+    if(!requireUser()) return;
+    if(!currentUid){ alert('Still connecting — try again in a second.'); return; }
+    const input = $('cm-in-'+id);
+    const text = input.value.trim();
+    if(!text) return;
+    try{
+      await db.collection('posts').doc(id).collection('comments').add({author:username, text, ts:Date.now(), uid: currentUid});
+      await db.collection('posts').doc(id).update({ commentCount: firebase.firestore.FieldValue.increment(1) });
+      input.value = '';
+    }catch(e){ console.error('comment failed', e); }
+  }
+
+  async function handleSubmitPost(){
+    if(!requireUser()) return;
+    if(!currentUid){ alert('Still connecting — try again in a second.'); return; }
+    const title = $('in-title').value.trim();
+    const body = $('in-body').value.trim();
+    const imageUrl = $('in-img').value.trim();
+    if(!title || !body){ alert('Add a headline and a story before posting.'); return; }
+    const btn = $('submit-post'); btn.disabled = true; btn.textContent='Posting…';
+    try{
+      await db.collection('posts').add({
+        author: username, ts: Date.now(), category: selectedCat,
+        title, body, imageUrl, likes: [], reposts: [], repostOf: null, commentCount: 0, uid: currentUid
+      });
+      $('in-title').value=''; $('in-body').value=''; $('in-img').value='';
+      $('composer-body').classList.remove('open');
+      $('composer-toggle').textContent='＋';
+    }catch(e){
+      console.error('post failed', e);
+      alert('Could not post — check your connection and try again.');
+    }
+    btn.disabled=false; btn.textContent='Post to Wire';
+  }
+
+  // ---------- event wiring ----------
+  function wireStaticEvents(){
+    $('composer-head').addEventListener('click', ()=>{
+      const body = $('composer-body');
+      const open = body.classList.toggle('open');
+      $('composer-toggle').textContent = open ? '−' : '＋';
+    });
+    $('cat-select').addEventListener('click', (e)=>{
+      const btn = e.target.closest('.cat-pill'); if(!btn) return;
+      selectedCat = btn.dataset.cat;
+      document.querySelectorAll('.cat-pill').forEach(b=>b.classList.remove('sel'));
+      btn.classList.add('sel');
+    });
+    $('submit-post').addEventListener('click', handleSubmitPost);
+    $('filters').addEventListener('click', (e)=>{
+      const btn = e.target.closest('.filter-tab'); if(!btn) return;
+      activeFilter = btn.dataset.filter;
+      renderAll();
+    });
+    $('change-name-btn').addEventListener('click', ()=>{
+      $('modal-name').value = username || '';
+      $('modal-bg').style.display='flex';
+      $('modal-name').focus();
+    });
+    $('modal-save').addEventListener('click', ()=>{
+      const name = $('modal-name').value.trim();
+      if(!name) return;
+      username = name.slice(0,30);
+      saveUsername(username);
+      $('modal-bg').style.display='none';
+      renderAll();
+    });
+    $('modal-name').addEventListener('keydown', (e)=>{ if(e.key==='Enter') $('modal-save').click(); });
+
+    $('feed').addEventListener('click', (e)=>{
+      const btn = e.target.closest('[data-action]'); if(!btn) return;
+      const id = btn.dataset.id;
+      const action = btn.dataset.action;
+      if(action==='like') handleLike(id);
+      else if(action==='repost') handleRepost(id);
+      else if(action==='share') handleShare(id);
+      else if(action==='toggle-comments') handleToggleComments(id);
+      else if(action==='comment') handleComment(id);
+    });
+    $('feed').addEventListener('error', (e)=>{
+      if(e.target && e.target.dataset && e.target.dataset.fallback){ e.target.style.display='none'; }
+    }, true);
+    $('feed').addEventListener('keydown', (e)=>{
+      if(e.key==='Enter' && e.target.classList.contains('comment-input')){
+        const btn = e.target.parentElement.querySelector('[data-action="comment"]');
+        if(btn) btn.click();
+      }
+    });
+  }
+
+  function init(){
+    setDateline();
+    wireStaticEvents();
+    // Special owner shortcut: visiting the site once with ?owner=utkarsh in the
+    // URL silently saves "Utkarsh.B" as the byline on this browser, forever —
+    // no prompt shown. Everyone else gets asked to create their byline right away.
+    try{
+      const params = new URLSearchParams(window.location.search);
+      if(params.get('owner') === 'utkarsh' && !loadUsername()){
+        saveUsername('Utkarsh.B');
+      }
+    }catch(e){ /* URL parsing unsupported — falls back to normal flow */ }
+    username = loadUsername();
+    renderAll();
+    initPostsListener();
+    if(!username){
+      $('modal-name').value = '';
+      $('modal-bg').style.display = 'flex';
+    }
+  }
+
+  init();
+})();
+</script>
+</body>
+</html>
